@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.2/lunar.js"></script>
+  <meta charset="UTF-8">
+  <title>Chinese Sexagenary Cycle Calculator (BaZi)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.2/lunar.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; }
+    .container {
+      background: white;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 500px;
+      margin: 2rem auto;
+    }
+    input, select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      width: 80%;
+      max-width: 320px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    button {
+      padding: 0.5rem 1.5rem;
+      border: none;
+      background: #4a90e2;
+      color: white;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    button:hover { background: #357ab8; }
+    .result {
+      font-size: 1.2rem;
+      color: #333;
+      margin-top: 1.2rem;
+      text-align: left;
+    }
+    label { display: block; text-align: left; margin: 0 auto 0.2rem auto; width: 80%; max-width: 320px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>书敏的八字排盘软件</h2>
+    <form id="sexagenaryForm" onsubmit="event.preventDefault(); calculateBaZi();">
+      <label for="name">名字:</label>
+      <input type="text" id="name" placeholder="Your Name" required />
+
+      <label for="dob">出生年月（农历）:</label>
+      <input type="date" id="dob" max="" required />
+
+      <label for="tob">出生时间（农历）:</label>
+      <input type="time" id="tob" required />
+
+      <label for="country">出生地区:</label>
+      <select id="country" required onchange="toggleProvince()">
+        <option value="">Select country</option>
+        <option value="China">China</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="province" id="provinceLabel" style="display:none;">Province (China):</label>
+      <select id="province" style="display:none;">
+        <option value="">Select province</option>
+        <option value="Beijing">北京</option>
+        <option value="Shanghai">上海</option>
+        <option value="Guangdong">广东</option>
+        <option value="Zhejiang">浙江</option>
+        <option value="Jiangsu">江苏</option>
+        <option value="Shandong">山东</option>
+        <option value="Shandong">山西</option>
+        <option value="Shandong">其他省份</option>
+        <!-- Add all provinces as needed -->
+      </select>
+
+      <button type="submit">计算生辰八字</button>
+    </form>
+    <div class="result" id="result"></div>
+  </div>
+  <script>
+    // Set max date to today
+    document.getElementById('dob').max = new Date().toISOString().split("T")[0];
+
+    function toggleProvince() {
+      const country = document.getElementById('country').value;
+      const provinceLabel = document.getElementById('provinceLabel');
+      const province = document.getElementById('province');
+      if (country === "China") {
+        provinceLabel.style.display = '';
+        province.style.display = '';
+        province.required = true;
+      } else {
+        provinceLabel.style.display = 'none';
+        province.style.display = 'none';
+        province.required = false;
+      }
+    }
+
+    function calculateBaZi() {
+      const name = document.getElementById('name').value.trim();
+      const dob = document.getElementById('dob').value;
+      const tob = document.getElementById('tob').value;
+      const country = document.getElementById('country').value;
+      const province = document.getElementById('province').value;
+      const result = document.getElementById('result');
+
+      if (!name || !dob || !tob || !country || (country === "China" && !province)) {
+        result.textContent = "Please fill in all required fields.";
+        return;
+      }
+
+      // Compose Date object (local time)
+      const date = new Date(dob + 'T' + tob);
+
+      // Get BaZi info using lunar-javascript
+      // lunar-javascript expects Y, M, D, H, m, s
+      const lunar = Lunar.fromYmdHms(
+        date.getFullYear(),
+        date.getMonth() + 1, // JS month: 0-based, lunar: 1-based
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds()
+      );
+      // Get sexagenary year/month/day/hour
+      const yearGZ = lunar.getYearInGanZhi();
+      const monthGZ = lunar.getMonthInGanZhi();
+      const dayGZ = lunar.getDayInGanZhi();
+      const timeGZ = lunar.getTimeInGanZhi();
+
+      // Show lunar date
+      const lunarDate = lunar.getYear() + "年" + lunar.getMonth() + "月" + lunar.getDay() + "日";
+
+      let location = country;
+      if (country === "China") location += ", " + province;
+
+      result.innerHTML = `
+        <b>${name}</b>, born on <b>${dob}</b> at <b>${tob}</b> in <b>${location}</b><br>
+        Lunar Calendar Date: <b>${lunarDate}</b><br>
+        <hr>
+        <b>八字 (Four Pillars):</b><br>
+        <b>年柱:</b> ${yearGZ}<br>
+        <b>月柱:</b> ${monthGZ}<br>
+        <b>日柱:</b> ${dayGZ}<br>
+        <b>时柱:</b> ${timeGZ}<br>
+      `;
+    }
+  </script>
+</body>
+</html>
